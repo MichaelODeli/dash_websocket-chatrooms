@@ -1,0 +1,30 @@
+.block-background {
+    box-shadow: 4px 10px 20px 5px rgba(0, 0, 0, 0.39);
+    text-align: center;
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+p, h1, h2, h3, h4, h5, h6 {
+    margin-bottom: 0;
+}
+
+td {
+    padding: 5px;
+}
+
+@media (max-width: 900px) {
+    .adaptive-grid {
+        display: block;
+    }
+    .adaptive-col {
+        max-width: 100%;
+        display: block;
+    }
+}
+
+.col-top-margin {
+    margin-top: 65px;
+}
+
