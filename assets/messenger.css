@@ -1,17 +1,76 @@
-.box {
+.boxx {
     display: flex;
     flex-flow: column;
     height: 100%;
   }
   
-  .box .row.fit-content {
+  .boxx .roww.fit-content {
     flex: 0 1 auto;
   }
   
-  .box .row.fill-remain {
+  .boxx .roww.fill-remain {
     flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    /* overflow: auto; */
+    /* NEED TO FIX OVERFLOW!!! */
   }
   
-  .box .row.fixed-height {
+  .boxx .roww.fixed-height {
     flex: 0 1 40px;
   }
+
+
+
+
+.messages-box {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+}
+
+.message-float-left,
+.message-float-right {
+    display: flex;
+    margin-top: 20px;
+    width: 100%;
+}
+
+.message-content-left,
+.message-content-right {
+    display: flex;
+    max-width: 45%;
+    word-wrap: normal;
+    border-radius: 20px;
+    padding: 10px;
+    align-items: flex-end;
+    flex-direction: column;
+}
+
+.message-float-left {
+    flex-direction: row;
+    text-align: left;
+}
+.message-content-left{
+    background-color: var(--bs-gray-300);
+}
+
+.message-float-right {
+    flex-direction: row-reverse;
+    text-align: right;
+}
+.message-content-right{
+    border: 1px solid #1C6EA4;
+}
+
+
+.message-main-text,
+.message-time {
+    padding: 3px;
+}
+.message-time {
+    color: var(--bs-gray-700);
+}

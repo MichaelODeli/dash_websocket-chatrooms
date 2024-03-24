@@ -14,23 +14,61 @@ app = dash.Dash(
     update_title="Updating...",
 )
 
+def format_message(text, time, side):
+    if side not in ['left', 'right']:
+        raise ValueError
+    else:
+        return html.Div(
+                    [
+                        html.Div(
+                            [
+                                html.P(
+                                    text,
+                                    className="message-main-text",
+                                ),
+                                html.P(
+                                    time,
+                                    className="message-time"
+                                ),
+                            ],
+                            className=f"message-content-{side}",
+                        ),
+                    ],
+                    className=f"message-float-{side}",
+                )
+
 server = app.server
 app.config.suppress_callback_exceptions = True
 
 messenger_content = [
     dmc.Stack(
         [
-            html.Div(html.P('Hello!'), className='row fill-remain'),
-            dmc.Divider(variant="solid"),
-            html.Div([
-                dbc.InputGroup(
-                    [dbc.Input(placeholder="Ваше сообщение"), dbc.Button('Отправить')],
-                    style={'width': '100%'}
+            html.Div(
+                html.Div(
+                    [
+                        format_message('Ну как вообще твои дела? Как живешь? '*5, '01:50', 'left'),
+                        format_message('И тебе привет!', '01:50', 'right'),  
+                    ],
+                    className="messages-box",
                 ),
-            ],
-            className='row fit-content')
+                className="roww fill-remain",
+            ),
+            dmc.Divider(variant="solid"),
+            html.Div(
+                [
+                    dbc.InputGroup(
+                        [
+                            dbc.Input(placeholder="Ваше сообщение",
+                                      id="message"),
+                            dbc.Button("Отправить", id="send-message"),
+                        ],
+                        style={"width": "100%"},
+                    ),
+                ],
+                className="row fit-content",
+            ),
         ],
-        className='box', 
+        className="boxx",
         # align='center',
         # justify='center'
     )
@@ -40,10 +78,21 @@ site_content = dmc.Grid(
     [
         dmc.Col(span=3, className="col-top-margin"),
         dmc.Col(
-            [html.Div(messenger_content, className="block-background", style={"height": "800px"})],
+            [
+                html.Div(
+                    messenger_content,
+                    className="block-background",
+                    style={"height": "800px"},
+                )
+            ],
             span=6,
             className="col-top-margin",
-            style={'display': 'flex', 'justify-items': 'center', 'flex-wrap': 'wrap', 'align-content': 'center'}
+            style={
+                "display": "flex",
+                "justify-items": "center",
+                "flex-wrap": "wrap",
+                "align-content": "center",
+            },
         ),
         dmc.Col(span=3, className="col-top-margin"),
     ],
