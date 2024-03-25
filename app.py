@@ -12,30 +12,33 @@ app = dash.Dash(
     external_stylesheets=[dbc.themes.FLATLY],
     title=config.site_title(),
     update_title="Updating...",
+    external_scripts=['/assets/custom.js']
 )
+
 
 def format_message(text, time, side):
     if side not in ['left', 'right']:
         raise ValueError
     else:
         return html.Div(
+            [
+                html.Div(
                     [
-                        html.Div(
-                            [
-                                html.P(
-                                    text,
-                                    className="message-main-text",
-                                ),
-                                html.P(
-                                    time,
-                                    className="message-time"
-                                ),
-                            ],
-                            className=f"message-content-{side}",
+                        html.P(
+                            text,
+                            className="message-main-text",
+                        ),
+                        html.P(
+                            time,
+                            className="message-time"
                         ),
                     ],
-                    className=f"message-float-{side}",
-                )
+                    className=f"message-content-{side}",
+                ),
+            ],
+            className=f"message-float-{side}",
+        )
+
 
 server = app.server
 app.config.suppress_callback_exceptions = True
@@ -46,14 +49,18 @@ messenger_content = [
             html.Div(
                 html.Div(
                     [
-                        format_message('Ну как вообще твои дела? Как живешь? '*5, '01:50', 'left'),
-                        format_message('И тебе привет!', '01:50', 'right'),  
-                        format_message('Текущая реализация блока с сообщениями не адаптирована под переполнение. Надо что-то придумать ', '01:50', 'left'),
-                        format_message('Да и выглядит это, мягко говоря, крупновато', '01:50', 'left'),
+                        format_message(
+                            'Ну как вообще твои дела? Как живешь? '*5, '01:50', 'left'),
+                        format_message('И тебе привет!', '01:50', 'right'),
+                        format_message(
+                            'Текущая реализация блока с сообщениями не адаптирована под переполнение. Надо что-то придумать ', '01:50', 'left'),
+                        format_message(
+                            'Да и выглядит это, мягко говоря, крупновато', '01:50', 'left'),
                     ],
                     className="messages-box",
                 ),
                 className="roww fill-remain",
+                id='scroller'
             ),
             dmc.Divider(variant="solid"),
             html.Div(
