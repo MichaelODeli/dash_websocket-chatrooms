@@ -58,9 +58,10 @@ messenger_content = [
                             'Да и выглядит это, мягко говоря, крупновато', '01:50', 'left'),
                     ],
                     className="messages-box",
+                    id='messages-main-container'
                 ),
                 className="roww fill-remain",
-                id='scroller'
+                
             ),
             dmc.Divider(variant="solid"),
             html.Div(
@@ -68,7 +69,7 @@ messenger_content = [
                     dbc.InputGroup(
                         [
                             dbc.Input(placeholder="Ваше сообщение",
-                                      id="message"),
+                                      id="message-text"),
                             dbc.Button("Отправить", id="send-message"),
                         ],
                         style={"width": "100%"},
@@ -77,9 +78,7 @@ messenger_content = [
                 className="row fit-content",
             ),
         ],
-        className="boxx",
-        # align='center',
-        # justify='center'
+        className="boxx"
     )
 ]
 
@@ -131,6 +130,21 @@ main_container = html.Div(
 )
 
 app.layout = dmc.NotificationsProvider(main_container)
+
+
+# callbacks
+@callback(
+    Output("messages-main-container", "children"),
+    Input("send-message", "n_clicks"),
+    [
+        State("messages-main-container", "children"),
+        State("message-text", "value"),
+    ],
+    prevent_initial_call=True,
+)
+def send_message(n_clicks, children, text):
+    children.append(format_message(text, '00:00', 'right'))
+    return children
 
 
 if __name__ == "__main__":
