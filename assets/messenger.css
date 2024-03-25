@@ -15,7 +15,8 @@
     justify-content: flex-end;
     flex-wrap: wrap;
 
-    overflow-y: auto;
+    overflow-y: scroll;
+    padding-right: 15px;
   }
 
 
@@ -26,27 +27,38 @@
     flex-direction: column;
     justify-content: flex-end;
     flex-wrap: nowrap;
+    width: 100%;
 }
 
 .message-float-left,
-.message-float-right {
+.message-float-right,
+.message-float-full {
     display: flex;
     margin-top: 20px;
     width: 100%;
 }
 
 .message-content-left,
-.message-content-right {
+.message-content-right,
+.message-content-full {
     display: flex;
     max-width: 45%;
     word-wrap: normal;
-    border-radius: 20px;
-    padding: 10px;
+    border-radius: 15px;
+    padding: 5px;
     align-items: flex-end;
     flex-direction: column;
+    /* min-width: 10%; */
 }
 
-.message-float-left {
+.message-content-full {
+    max-width: 100%;
+    width: 100%;
+    display: block;
+}
+
+.message-float-left,
+.message-content-full{
     flex-direction: row;
     text-align: left;
 }
@@ -69,4 +81,5 @@
 }
 .message-time {
     color: var(--bs-gray-700);
+    display: none;
 }

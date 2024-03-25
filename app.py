@@ -12,12 +12,12 @@ app = dash.Dash(
     external_stylesheets=[dbc.themes.FLATLY],
     title=config.site_title(),
     update_title="Updating...",
-    external_scripts=['/assets/custom.js']
+    external_scripts=['/assets/scroll_to_top.js']
 )
 
 
 def format_message(text, time, side):
-    if side not in ['left', 'right']:
+    if side not in ['left', 'right', 'full']:
         raise ValueError
     else:
         return html.Div(
@@ -27,11 +27,11 @@ def format_message(text, time, side):
                         html.P(
                             text,
                             className="message-main-text",
-                        ),
+                        ) if side in ['left', 'right'] else text,
                         html.P(
                             time,
                             className="message-time"
-                        ),
+                        ) if side in ['left', 'right'] else None,
                     ],
                     className=f"message-content-{side}",
                 ),
@@ -49,18 +49,19 @@ messenger_content = [
             html.Div(
                 html.Div(
                     [
-                        format_message(
-                            'Ну как вообще твои дела? Как живешь? '*5, '01:50', 'left'),
+                        format_message('Привет!', '01:50', 'left'),
                         format_message('И тебе привет!', '01:50', 'right'),
-                        format_message(
-                            'Текущая реализация блока с сообщениями не адаптирована под переполнение. Надо что-то придумать ', '01:50', 'left'),
-                        format_message(
-                            'Да и выглядит это, мягко говоря, крупновато', '01:50', 'left'),
+                        format_message('И тебе привет!', '01:50', 'right'),
+                        format_message('И тебе привет!', '01:50', 'right'),
+                        format_message('И тебе привет!', '01:50', 'right'),
+                        format_message('И тебе привет!', '01:50', 'right'),
+                        format_message('Связь потеряна.', '01:50', 'full'),
                     ],
                     className="messages-box",
                     id='messages-main-container'
                 ),
                 className="roww fill-remain",
+                id='msg_scroll_box'
                 
             ),
             dmc.Divider(variant="solid"),
@@ -134,7 +135,10 @@ app.layout = dmc.NotificationsProvider(main_container)
 
 # callbacks
 @callback(
-    Output("messages-main-container", "children"),
+    [
+        Output("messages-main-container", "children"),
+        Output("message-text", "value"),
+    ],
     Input("send-message", "n_clicks"),
     [
         State("messages-main-container", "children"),
@@ -144,7 +148,7 @@ app.layout = dmc.NotificationsProvider(main_container)
 )
 def send_message(n_clicks, children, text):
     children.append(format_message(text, '00:00', 'right'))
-    return children
+    return children, None
 
 
 if __name__ == "__main__":
