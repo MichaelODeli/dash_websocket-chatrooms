@@ -10,15 +10,12 @@
   
   .boxx .roww.fill-remain {
     flex: 1 1 auto;
-    /* display: flex; */
-    flex-direction: column;
+    display: flex;
+    flex-direction: row-reverse;
     justify-content: flex-end;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
+
     overflow-y: auto;
-  }
-  
-  .boxx .roww.fixed-height {
-    flex: 0 1 40px;
   }
 
 

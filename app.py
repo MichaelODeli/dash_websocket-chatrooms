@@ -85,7 +85,7 @@ messenger_content = [
 
 site_content = dmc.Grid(
     [
-        dmc.Col(span=3, className="col-top-margin"),
+        dmc.Col(span=3, className="col-top-margin adaptive-col"),
         dmc.Col(
             [
                 html.Div(
@@ -95,7 +95,7 @@ site_content = dmc.Grid(
                 )
             ],
             span=6,
-            className="col-top-margin",
+            className="col-top-margin adaptive-col",
             style={
                 "display": "flex",
                 "justify-items": "center",
@@ -103,10 +103,11 @@ site_content = dmc.Grid(
                 "align-content": "center",
             },
         ),
-        dmc.Col(span=3, className="col-top-margin"),
+        dmc.Col(span=3, className="col-top-margin adaptive-col"),
     ],
     gutter="xl",
     style={"min-height": "100vh"},
+    className='adaptive-grid'
 )
 
 header = dmc.Header(
