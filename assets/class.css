@@ -17,14 +17,24 @@ td {
 @media (max-width: 900px) {
     .adaptive-grid {
         display: block;
+        padding: 0 !important;
     }
     .adaptive-col {
         max-width: 100%;
         display: block;
     }
+    .hide-it {
+        display: none !important;
+    }
+    .block-background {
+        box-shadow: unset;
+    }
+    .adaptive-nav {
+        height: 10vh !important;
+    }
 }
 
-.col-top-margin {
-    margin-top: 65px;
-}
 
+/* .dash-debug-menu__outer, .dash-debug-menu {
+    display: none !important;
+} */
