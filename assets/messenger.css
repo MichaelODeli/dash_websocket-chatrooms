@@ -2,10 +2,12 @@
     display: flex;
     flex-flow: column;
     height: 100%;
+    width: 100%;
   }
   
   .boxx .roww.fit-content {
     flex: 0 1 auto;
+    width: 100%;
   }
   
   .boxx .roww.fill-remain {
@@ -14,8 +16,9 @@
     flex-direction: row-reverse;
     justify-content: flex-end;
     flex-wrap: wrap;
+    width: 100%;
 
-    overflow-y: scroll;
+    overflow-y: auto;
     padding-right: 15px;
   }
 
@@ -25,61 +28,29 @@
 .messages-box {
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
+    /* justify-content: flex-end; */
     flex-wrap: nowrap;
     width: 100%;
+    gap: 10px;
 }
 
-.message-float-left,
-.message-float-right,
-.message-float-full {
-    display: flex;
-    margin-top: 20px;
+.message {
+    border: solid;
     width: 100%;
-}
-
-.message-content-left,
-.message-content-right,
-.message-content-full {
-    display: flex;
-    max-width: 45%;
-    word-wrap: normal;
-    border-radius: 15px;
-    padding: 5px;
-    align-items: flex-end;
-    flex-direction: column;
-    /* min-width: 10%; */
-}
-
-.message-content-full {
-    max-width: 100%;
-    width: 100%;
-    display: block;
-}
-
-.message-float-left,
-.message-content-full{
-    flex-direction: row;
+    padding: 0 5px;
+    height: fit-content;
     text-align: left;
+    position: relative;
+    margin-bottom: 0 !important;
 }
-.message-content-left{
-    background-color: var(--bs-gray-300);
-}
-
-.message-float-right {
-    flex-direction: row-reverse;
-    text-align: right;
-}
-.message-content-right{
-    border: 1px solid #1C6EA4;
+.message:hover {
+    background-color: var(--bs-table-hover-bg);
 }
 
-
-.message-main-text,
 .message-time {
-    padding: 3px;
-}
-.message-time {
-    color: var(--bs-gray-700);
-    display: none;
+    position: absolute;
+    color: var(--bs-secondary);
+    bottom: 0;
+    right: 0;
+    padding: 5px;
 }
