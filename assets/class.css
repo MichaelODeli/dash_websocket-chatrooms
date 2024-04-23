@@ -35,6 +35,14 @@ td {
 }
 
 
-/* .dash-debug-menu__outer, .dash-debug-menu {
+.dash-debug-menu__outer, .dash-debug-menu {
     display: none !important;
-} */
+}
+
+.main_container {
+    height: 100vh; /* Fallback for browsers that do not support Custom Properties */
+    height: calc(var(--vh, 1vh) * 100);
+    /* margin: auto; */
+    /* min-height: 100vh; */
+    overflow: hidden;
+}

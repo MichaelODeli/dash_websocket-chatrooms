@@ -3,8 +3,10 @@ from dash import html, Output, Input, State, callback, dcc, ALL, no_update
 import dash_mantine_components as dmc
 from dash_iconify import DashIconify
 import dash_bootstrap_components as dbc
-from dash_extensions import Purify
+from dash_extensions import Purify, WebSocket
 import config
+import random
+import ast
 
 app = dash.Dash(
     __name__,
@@ -12,6 +14,7 @@ app = dash.Dash(
     external_stylesheets=[dbc.themes.FLATLY],
     title=config.site_title(),
     update_title="Updating...",
+    external_scripts=['/assets/size.js']
 )
 
 
@@ -74,13 +77,17 @@ gotoroom = dmc.Stack(
 
 site_content = dmc.Grid(
     [
+        dcc.Store(id='room_id_value'),
+        dcc.Store(id='user_id_value'),
+        html.Div(id='ws-handle'),
+
         dmc.Col(span=3, className="hide-it"),
         dmc.Col(
             [
                 html.Div(
                     gotoroom,
                     className="block-background",
-                    style={"height": "85vh"},
+                    style={"height": "75vh"},
                     id="messenger-div",
                 )
             ],
@@ -142,7 +149,8 @@ connect_modal = dbc.Modal(
 
 main_container = html.Div(
     [header, site_content, connect_modal],
-    style={"margin": "auto", "min-height": "100vh", "overflow": "hidden"},
+    className='main_container',
+    # style={},
 )
 
 app.layout = dmc.NotificationsProvider(main_container)
@@ -151,12 +159,15 @@ app.layout = dmc.NotificationsProvider(main_container)
 # callbacks
 @callback(
     [
+        Output('ws-handle', 'children'),
         Output("messenger-div", "children"),
         Output("back-button", "style"),
         Output("modal", "is_open", allow_duplicate=True),
         Output("connect-to-room", "n_clicks"),
         Output("create-room", "n_clicks"),
-        Output('room-id', 'invalid')
+        Output('room_id_value', 'data'),
+        Output('user_id_value', 'data'),
+        Output('room-id', 'invalid'),
     ],
     [Input("connect-to-room", "n_clicks"), Input("create-room", "n_clicks")],
     [
@@ -166,25 +177,19 @@ app.layout = dmc.NotificationsProvider(main_container)
     prevent_initial_call=True,
 )
 def openroom(connect_with_id, connect_newroom, is_open, room_id):
+    user_id = str(random.randint(100, 999))
     if connect_newroom == 0 and (room_id == '' or room_id == None or not test_roomid(room_id)):
-        return no_update, no_update, no_update, no_update, no_update, True
+        return [no_update]*8 + [True]
     if connect_newroom == 1:
-        import random
-        room_id = '-'.join([str(random.randint(100, 999)), str(random.randint(100, 999)), str(random.randint(100, 999))])
+        room_id = str(random.randint(100, 999))
     messenger_content = [
         dmc.Stack(
             [
-                dcc.Markdown(f'**ID комнаты**: `{str(room_id)}`'),
+                dcc.Markdown(f'**ID комнаты**: `{room_id}`, **Ваш ID**: `{user_id}`'),
                 html.Div(
                     html.Div(
                         [
-                            format_message("Привет!", "01:50", "left"),
-                            format_message("И тебе привет!", "01:50", "right"),
-                            format_message("И тебе привет!", "01:50", "right"),
-                            format_message("И тебе привет!", "01:50", "right"),
-                            format_message("И тебе привет!", "01:50", "right"),
-                            format_message("И тебе привет!", "01:50", "right"),
-                            format_message("Связь потеряна.", "01:50", "full"),
+                            format_message("Приятного общения! Для завершения диалога - нажмите на кнопку сверху или выйдите из комнаты.", "01:50", "full"),
                         ],
                         className="messages-box",
                         id="messages-main-container",
@@ -212,11 +217,14 @@ def openroom(connect_with_id, connect_newroom, is_open, room_id):
         )
     ]
     return (
+        WebSocket(url=f"ws://192.168.3.36:5000/ws/{room_id}", id="ws"),
         messenger_content,
         {"display": "unset"},
         not is_open if connect_with_id != 0 else is_open,
         0,
         0,
+        room_id,
+        user_id,
         False
     )
 
@@ -235,19 +243,41 @@ def toggle_modal(n1, is_open):
 
 @callback(
     [
-        Output("messages-main-container", "children"),
+        Output("messages-main-container", "children", allow_duplicate=True),
         Output("message-text", "value"),
+        Output("ws", "send")
     ],
     Input("send-message", "n_clicks"),
     [
         State("messages-main-container", "children"),
         State("message-text", "value"),
+        State('room_id_value', 'data'),
+        State('user_id_value', 'data'),
     ],
     prevent_initial_call=True,
 )
-def send_message(n_clicks, children, text):
+def send_message(n_clicks, children, text, room_id, user_id):
+    if text == None: return [no_update]*3 
     children.append(format_message(text, "00:00", "right"))
-    return children, None
+    return children, None, str({'mode': 'send', 'user_id': user_id, 'room_id': room_id, 'msg': text})
+
+@callback(
+    Output("messages-main-container", "children"),
+    Input("ws", "message"),
+    [
+        State("messages-main-container", "children"),
+        State('room_id_value', 'data'),
+        State('user_id_value', 'data'),
+    ],
+    prevent_initial_call=True,
+)
+def display_message(message, children, room_id, user_id):
+    print(message)
+    msg_dict = ast.literal_eval(message['data'])
+    text = msg_dict['msg']
+    children.append(format_message(text, "00:00", "left"))
+    return children
+
 
 
 if __name__ == "__main__":
