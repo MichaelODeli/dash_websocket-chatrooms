@@ -43,7 +43,7 @@
     position: relative;
     margin-bottom: 0 !important;
 }
-.message:hover {
+.message-hover:hover {
     background-color: var(--bs-table-hover-bg);
 }
 

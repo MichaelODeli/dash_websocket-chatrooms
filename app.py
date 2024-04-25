@@ -7,6 +7,7 @@ from dash import (
     callback,
     dcc,
     no_update,
+    clientside_callback
 )
 import dash_mantine_components as dmc
 import dash_bootstrap_components as dbc
@@ -88,13 +89,33 @@ site_content = dmc.Grid(
 
 header = dbc.Navbar(
     [
-        dbc.NavbarBrand(config.site_title()),
-        html.A(
-            "На главную",
-            className="btn btn-primary",
-            href="/",
-            style={"display": "none"},
-            id="back-button",
+        dmc.Grid(
+            [
+                dmc.Col(
+                    [
+                        html.A(
+                            dbc.NavbarBrand(config.site_title(), style={'color': 'black'}),
+                            href="/",
+                            style={'text-decoration': 'none'}
+                        ),
+                    ],
+                    span='content'
+                ),
+                dmc.Col(' ', span='auto'),
+                dmc.Col(
+                    [
+                        html.Span(
+                            [
+                                dbc.Label(className="fa fa-moon", html_for="color-mode-switch", color='primary'),
+                                dbc.Switch( id="color-mode-switch", value=True, className="d-inline-block ms-1", persistence=True),
+                                dbc.Label(className="fa fa-sun", html_for="color-mode-switch", color='primary'), 
+                            ]
+                        )
+                    ],
+                    span='content', style={'display': 'flex', 'align-items': 'flex-end'}
+                )
+            ],
+            style={'width': '100%'}
         ),
     ],
     # fixed=True,
@@ -192,7 +213,6 @@ def get_query_server_health(state, msg):
         Output("ws-handle", "children"),
         Output("rooms_query_timer", "disabled"),
         Output("messenger-div", "children", allow_duplicate=True),
-        Output("back-button", "style"),
         Output("modal", "is_open", allow_duplicate=True),
         Output("connect-to-room", "n_clicks"),
         Output("create-room", "n_clicks"),
@@ -210,7 +230,7 @@ def openroom(connect_with_id, connect_newroom, is_open, room_id):
     if connect_newroom == 0 and (
         room_id == "" or room_id == None or room_id not in avaliable_rooms
     ):
-        return [no_update] * 9 + [True]
+        return [no_update] * 8 + [True]
     if connect_newroom == 1:
         room_id = str(random.randint(100, 999))
     messenger_content = [
@@ -270,7 +290,6 @@ def openroom(connect_with_id, connect_newroom, is_open, room_id):
         ],
         True,
         messenger_content,
-        {"display": "unset"},
         not is_open if connect_with_id != 0 else is_open,
         0,
         0,
@@ -345,6 +364,17 @@ def states_handler(state):
 def display_message(message, children, room_id, client_id):
     return callbacks_messages.display_message(message, children, room_id, client_id)
 
+
+clientside_callback(
+    """
+    (switchOn) => {
+       document.documentElement.setAttribute('data-bs-theme', switchOn ? 'light' : 'dark');  
+       return window.dash_clientside.no_update
+    }
+    """,
+    Output("color-mode-switch", "id"),
+    Input("color-mode-switch", "value"),
+)
 
 if __name__ == "__main__":
     app.run_server(debug=True, host="0.0.0.0", port=config.panel_port())

@@ -17,7 +17,7 @@ def make_clients_str(msg_dict, client_id):
 
 def format_message(content, time="", sender_id="", my_message=False, service=False):
     "Отформатировать сообщение для его отображения в мессенджере"
-    appendix = " bg-light" if my_message else ""
+    appendix = " bg-light text-primary" if my_message else ""
     msg_layout = (
         html.Div(
             [
@@ -26,9 +26,9 @@ def format_message(content, time="", sender_id="", my_message=False, service=Fal
                 content,
                 html.P(time, className="message-time"),
             ],
-            className="message table border rounded" + appendix,
+            className="message message-hover table border rounded p-1" + appendix,
         )
         if not service
-        else html.Div(content, className="message table border rounded bg-warning")
+        else html.Div(content, className="message table border rounded alert alert-warning text-primary text-center p-2")
     )
     return msg_layout
