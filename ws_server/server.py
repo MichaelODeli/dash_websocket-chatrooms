@@ -15,16 +15,21 @@ async def send_task(ws, queue):
         message = await queue.get()
         await ws.send(message)
 
-# @app.websocket("/ws/get_rooms")
-# async def get_rooms():
-#     global rooms_and_clients
-#     await websocket.accept()
-#     while True:
-#         msg = await websocket.receive()
-#         await websocket.send(str())
+@app.websocket("/ws/get_server_state")
+async def get_server_state():
+    "Обработчик запросов состояния сервера"
+    global rooms_and_clients
+    await websocket.accept()
+    while True:
+        msg_s = await websocket.receive()
+        msg_dict_s = ast.literal_eval(msg_s)
+        if msg_dict_s['mode'] == 'get_rooms':
+            rooms = ','.join(list(rooms_and_clients.keys())) if len(list(rooms_and_clients.keys())) > 0 else 'no_rooms'
+            await websocket.send(rooms)
 
 @app.websocket("/ws/<room_id>/<client_id>")
 async def ws(room_id, client_id):
+    "Получение сообщения и рассылка его всем участникам комнаты"
     # мониторинг клиентов и комнат
     global rooms_and_clients
     if room_id not in rooms_and_clients:

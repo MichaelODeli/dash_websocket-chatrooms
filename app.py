@@ -6,71 +6,25 @@ from dash import (
     State,
     callback,
     dcc,
-    ALL,
     no_update,
-    clientside_callback,
 )
 import dash_mantine_components as dmc
-from dash_iconify import DashIconify
 import dash_bootstrap_components as dbc
-from dash_extensions import Purify, WebSocket
+from dash_extensions import WebSocket
 import config
 import random
-import ast
-from datetime import datetime
-import time
+from components import callbacks_messages, callbacks_server, defs_messages
+
+avaliable_rooms = []
 
 app = dash.Dash(
     __name__,
     use_pages=False,
     external_stylesheets=[dbc.themes.FLATLY, dbc.icons.FONT_AWESOME],
     title=config.site_title(),
-    update_title="Updating...",
+    update_title="Dash Messenger ↺",
     external_scripts=["/assets/size.js"],
 )
-
-
-def format_message(content, time="", sender_id="", my_message=False, service=False):
-    "Отформатировать сообщение для его отображения в мессенджере"
-    appendix = " bg-light" if my_message else ""
-    msg_layout = (
-        html.Div(
-            [
-                (html.Strong("Вы:") if my_message else html.Strong(f"ID:{sender_id}")),
-                html.Br(),
-                content,
-                html.P(time, className="message-time"),
-            ],
-            className="message table border rounded" + appendix,
-        )
-        if not service
-        else html.Div(content, className="message table border rounded bg-warning")
-    )
-    return msg_layout
-
-
-def test_roomid(room_id):
-    "Проверка существования номера комнаты"
-    if room_id == "123":
-        return False
-    else:
-        return True
-
-
-def make_clients_str(msg_dict, client_id):
-    "Подготовить строку с подключенными клиентами в комнате"
-    clients = msg_dict["clients-in-room"].split(",")
-    try:
-        clients.remove(client_id)
-        clients.remove(msg_dict["removed"])
-    except:
-        pass
-    if clients == []:
-        clts_str = "В комнате только Вы."
-    else:
-        room_members = ", ".join(clients) if len(clients) > 0 else clients[0]
-        clts_str = f"**Участники**: `{room_members}`"
-    return clts_str
 
 
 server = app.server
@@ -90,9 +44,15 @@ gotoroom = dmc.Stack(
             [
                 dbc.Button("Подключиться", id="connect-modal"),
                 dbc.Button("Создать комнату", id="create-room", n_clicks=0),
-            ]
+            ],
+            id="connect-buttons-group",
         ),
-        # html.Button('Open room', id='open-room-button')
+        dbc.Alert(
+            "Сервер временно недоступен. Попробуйте позднее и перезагрузите страницу.",
+            color="danger",
+            style={"display": "none"},
+            id="alert-disabled-server",
+        ),
     ],
     className="boxx",
     align="center",
@@ -100,10 +60,6 @@ gotoroom = dmc.Stack(
 
 site_content = dmc.Grid(
     [
-        dcc.Store(id="room_id_value"),
-        dcc.Store(id="client_id_value"),
-        dcc.Store(id="avaliable-rooms"),
-        html.Div(id="ws-handle"),
         dmc.Col(span=3, className="hide-it"),
         dmc.Col(
             [
@@ -169,10 +125,19 @@ connect_modal = dbc.Modal(
     # is_open=False
 )
 
+service_elements = html.Div(
+    [
+        dcc.Store(id="room_id_value"),
+        dcc.Store(id="client_id_value"),
+        dcc.Store(id="avaliable-rooms"),
+        html.Div(id="ws-handle"),
+        dcc.Interval(id="rooms_query_timer"),
+        WebSocket(url=f"ws://192.168.3.36:5000/ws/get_server_state", id="ws_state"),
+    ]
+)
 
 main_container = html.Div(
-    [header, site_content, connect_modal],
-    className="main_container",
+    [header, site_content, connect_modal, service_elements], className="main_container"
 )
 
 app.layout = dmc.NotificationsProvider(main_container)
@@ -180,8 +145,52 @@ app.layout = dmc.NotificationsProvider(main_container)
 
 # callbacks
 @callback(
+    Output("ws_state", "send"),
+    Input("rooms_query_timer", "n_intervals"),
+)
+def send_query_server_health(n_intervals):
+    "Отправка запроса с наличием комнат на сервере"
+    return str({"mode": "get_rooms", "n_intervals": n_intervals})
+
+
+@callback(
+    [
+        Output("connect-modal", "disabled"),
+        Output("connect-buttons-group", "style"),
+        Output("alert-disabled-server", "style"),
+        Output("rooms_query_timer", "disabled", allow_duplicate=True),
+    ],
+    [Input("ws_state", "state"), Input("ws_state", "message")],
+    prevent_initial_call="initial_duplicate",
+)
+def get_query_server_health(state, msg):
+    "Обработчик доступности сервера и информации о комнатах"
+    if state == None or msg == None:
+        return [no_update] * 4
+
+    global avaliable_rooms
+
+    show = {"display": "unset"}
+    hide = {"display": "none"}
+
+    if state["readyState"] == 3:
+        return no_update, hide, show, True
+    try:
+        rooms = msg["data"]
+        if rooms == "no_rooms":
+            avaliable_rooms = []
+            return True, show, hide, no_update
+        else:
+            avaliable_rooms = rooms.split(",")
+            return False, show, hide, no_update
+    except:
+        return no_update, no_update, no_update
+
+
+@callback(
     [
         Output("ws-handle", "children"),
+        Output("rooms_query_timer", "disabled"),
         Output("messenger-div", "children", allow_duplicate=True),
         Output("back-button", "style"),
         Output("modal", "is_open", allow_duplicate=True),
@@ -197,10 +206,11 @@ app.layout = dmc.NotificationsProvider(main_container)
 )
 def openroom(connect_with_id, connect_newroom, is_open, room_id):
     client_id = str(random.randint(100, 999))
+    global avaliable_rooms
     if connect_newroom == 0 and (
-        room_id == "" or room_id == None or not test_roomid(room_id)
+        room_id == "" or room_id == None or room_id not in avaliable_rooms
     ):
-        return [no_update] * 8 + [True]
+        return [no_update] * 9 + [True]
     if connect_newroom == 1:
         room_id = str(random.randint(100, 999))
     messenger_content = [
@@ -216,12 +226,16 @@ def openroom(connect_with_id, connect_newroom, is_open, room_id):
                 # dmc.LoadingOverlay(
                 html.Div(
                     html.Div(
-                        [format_message("Приятного общения!", service=True)],
+                        [
+                            defs_messages.format_message(
+                                "Приятного общения!", service=True
+                            )
+                        ],
                         className="messages-box",
                         id="messages-main-container",
                     ),
                     className="roww fill-remain",
-                    id='overlay'
+                    id="overlay",
                 ),
                 html.Div(
                     [
@@ -254,6 +268,7 @@ def openroom(connect_with_id, connect_newroom, is_open, room_id):
             WebSocket(url=f"ws://192.168.3.36:5000/ws/{room_id}/{client_id}", id="ws"),
             dcc.Interval(id="init-connect", interval=100, max_intervals=1),
         ],
+        True,
         messenger_content,
         {"display": "unset"},
         not is_open if connect_with_id != 0 else is_open,
@@ -261,7 +276,7 @@ def openroom(connect_with_id, connect_newroom, is_open, room_id):
         0,
         room_id,
         client_id,
-        False
+        False,
     )
 
 
@@ -293,36 +308,19 @@ def toggle_modal(n1, is_open):
     prevent_initial_call=True,
 )
 def send_message(n_clicks, children, text, room_id, client_id):
-    if text == None:
-        return [no_update] * 3
-    time = datetime.now().strftime("%H:%M")
-    children.append(format_message(html.P(text), time, my_message=True))
-    return (
-        children,
-        None,
-        str(
-            {
-                "task": "send",
-                "msg_type": "text",
-                "client_id": client_id,
-                "room_id": room_id,
-                "content": text,
-                "time": time,
-            }
-        ),
-    )
+    return callbacks_messages.send_message(n_clicks, children, text, room_id, client_id)
 
 
 @callback(
     Output("ws", "send"),
-    Output("messages-main-container", 'children', allow_duplicate=True),
+    Output("messages-main-container", "children", allow_duplicate=True),
     [
         Input("init-connect", "n_intervals"),
     ],
     prevent_initial_call=True,
 )
 def get_clients_in_room(n_intervals):
-    return str({"task": "connect_handle"}) , no_update
+    return str({"task": "connect_handle"}), no_update
 
 
 @callback(
@@ -331,32 +329,7 @@ def get_clients_in_room(n_intervals):
     prevent_initial_call=True,
 )
 def states_handler(state):
-    if state == None or state == "":
-        return no_update
-    else:
-        ready_state = state["readyState"]
-        print(state)
-        if ready_state == 3:
-            return dmc.Stack(
-                [
-                    html.H5("Соединение закрыто."),
-                    (
-                        "Сервер недоступен. Попробуйте позднее."
-                        if state["code"] == 1006
-                        else ''
-                    ),
-                    html.A(
-                        "Попробовать снова",
-                        className="btn btn-primary",
-                        href="/",
-                        style={'max-width': '40%'}
-                    ),
-                ],
-                style={'height': '100%', 'display': 'flex', 'justify-content': 'center'},
-                align='center'
-            )
-        else: 
-            return no_update
+    return callbacks_server.states_handler(state)
 
 
 @callback(
@@ -370,30 +343,7 @@ def states_handler(state):
     prevent_initial_call=True,
 )
 def display_message(message, children, room_id, client_id):
-    if message == None or message == "":
-        return no_update, no_update
-
-    msg_dict = ast.literal_eval(message["data"])
-    if msg_dict["task"] == "send":
-        content = msg_dict["content"]
-        remote_client_id = msg_dict["client_id"]
-        time = msg_dict["time"]
-        msg_type = msg_dict["msg_type"]
-        if msg_type == "text":
-            # print(message)
-            children.append(
-                format_message(html.P(content), time, sender_id=remote_client_id)
-            )
-        elif msg_type == "img":
-            print(f"here is img from {remote_client_id} in room {room_id}")
-            # children.append(format_message(html.Img(src=text, style={'max-height': '150px'}), time, sender_id=remote_client_id))
-        clts_str = make_clients_str(msg_dict, client_id)
-
-        return children, clts_str
-    elif msg_dict["task"] in ["new-client", "removed-client"]:
-        # print(msg_dict)
-        clts_str = make_clients_str(msg_dict, client_id)
-        return no_update, clts_str
+    return callbacks_messages.display_message(message, children, room_id, client_id)
 
 
 if __name__ == "__main__":
