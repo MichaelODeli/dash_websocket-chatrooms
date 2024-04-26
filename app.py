@@ -7,7 +7,7 @@ from dash import (
     callback,
     dcc,
     no_update,
-    clientside_callback
+    clientside_callback,
 )
 import dash_mantine_components as dmc
 import dash_bootstrap_components as dbc
@@ -23,7 +23,7 @@ app = dash.Dash(
     use_pages=False,
     external_stylesheets=[dbc.themes.FLATLY, dbc.icons.FONT_AWESOME],
     title=config.site_title(),
-    update_title="Dash Messenger ↺",
+    update_title="Dash Chatrooms ↺",
     external_scripts=["/assets/size.js"],
 )
 
@@ -94,31 +94,46 @@ header = dbc.Navbar(
                 dmc.Col(
                     [
                         html.A(
-                            dbc.NavbarBrand(config.site_title(), style={'color': 'black'}),
+                            dbc.NavbarBrand(
+                                config.site_title(), style={"color": "black"}
+                            ),
                             href="/",
-                            style={'text-decoration': 'none'}
+                            style={"text-decoration": "none"},
                         ),
                     ],
-                    span='content'
+                    span="content",
                 ),
-                dmc.Col(' ', span='auto'),
+                dmc.Col(" ", span="auto"),
                 dmc.Col(
                     [
                         html.Span(
                             [
-                                dbc.Label(className="fa fa-moon", html_for="color-mode-switch", color='primary'),
-                                dbc.Switch( id="color-mode-switch", value=True, className="d-inline-block ms-1", persistence=True),
-                                dbc.Label(className="fa fa-sun", html_for="color-mode-switch", color='primary'), 
+                                dbc.Label(
+                                    className="fa fa-moon",
+                                    html_for="color-mode-switch",
+                                    color="primary",
+                                ),
+                                dbc.Switch(
+                                    id="color-mode-switch",
+                                    value=True,
+                                    className="d-inline-block ms-1",
+                                    persistence=True,
+                                ),
+                                dbc.Label(
+                                    className="fa fa-sun",
+                                    html_for="color-mode-switch",
+                                    color="primary",
+                                ),
                             ]
                         )
                     ],
-                    span='content', style={'display': 'flex', 'align-items': 'flex-end'}
-                )
+                    span="content",
+                    style={"display": "flex", "align-items": "flex-end"},
+                ),
             ],
-            style={'width': '100%'}
+            style={"width": "100%"},
         ),
     ],
-    # fixed=True,
     style={"height": "5vh", "padding": "0 10px 0 10px"},
     class_name="adaptive-nav",
 )
@@ -143,7 +158,6 @@ connect_modal = dbc.Modal(
         ),
     ],
     id="modal",
-    # is_open=False
 )
 
 service_elements = html.Div(
@@ -210,21 +224,26 @@ def get_query_server_health(state, msg):
 
 @callback(
     [
-        Output("ws-handle", "children"),
-        Output("rooms_query_timer", "disabled"),
-        Output("messenger-div", "children", allow_duplicate=True),
-        Output("modal", "is_open", allow_duplicate=True),
-        Output("connect-to-room", "n_clicks"),
-        Output("create-room", "n_clicks"),
-        Output("room_id_value", "data"),
-        Output("client_id_value", "data"),
-        Output("room-id", "invalid"),
+        Output("ws-handle", "children"),  # ссылка на вебсокет
+        Output(
+            "rooms_query_timer", "disabled"
+        ),  # таймер на запрос комнат. отключаем чтоб не делать лишних запросов
+        Output("messenger-div", "children", allow_duplicate=True),  # блок с сообщениями
+        Output("modal", "is_open", allow_duplicate=True),  # закрыть модалку
+        Output("connect-to-room", "n_clicks"),  # кнопка дял подключения к комнате
+        Output("create-room", "n_clicks"),  # кнопка для создания комнаты
+        Output("room_id_value", "data"),  # значение номера комнаты
+        Output("client_id_value", "data"),  # значение номера коиента
+        Output(
+            "room-id", "invalid"
+        ),  # если id комнаты неверный - поле будет подсвечено красным
     ],
     [Input("connect-to-room", "n_clicks"), Input("create-room", "n_clicks")],
     [State("modal", "is_open"), State("room-id", "value")],
     prevent_initial_call=True,
 )
 def openroom(connect_with_id, connect_newroom, is_open, room_id):
+    "Создать новую или подключиться к известной комнате"
     client_id = str(random.randint(100, 999))
     global avaliable_rooms
     if connect_newroom == 0 and (
@@ -243,7 +262,6 @@ def openroom(connect_with_id, connect_newroom, is_open, room_id):
                         dcc.Markdown("**Участники скрыты**", id="room-members"),
                     ]
                 ),
-                # dmc.LoadingOverlay(
                 html.Div(
                     html.Div(
                         [

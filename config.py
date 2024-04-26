@@ -5,7 +5,7 @@ def ws_port():
     return 2203
 
 def site_title():
-    return 'Dash Messenger'
+    return 'Dash Chatrooms'
 
 def temp():
     return 'temp'
